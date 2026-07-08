@@ -1,0 +1,4 @@
+Fixed the wording of the "cookie too large" warning raised in
+development mode so the message is grammatically complete
+("The size of the cookie is too large...") instead of the previous
+ungrammatical "The size of is too large..." -- by :user:`HrachShah`.

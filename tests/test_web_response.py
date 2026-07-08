@@ -1599,7 +1599,7 @@ async def test_warn_large_cookie(buf: bytearray, writer: AbstractStreamWriter) -
 
     with pytest.warns(
         UserWarning,
-        match="The size of is too large, it might get ignored by the client.",
+        match="The size of the cookie is too large, it might get ignored by the client.",
     ):
         resp.set_cookie("foo", "ÿ" + "8" * 4065, max_age=2600)
     req = make_request("GET", "/", writer=writer)
