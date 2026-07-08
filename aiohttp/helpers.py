@@ -1084,7 +1084,7 @@ class CookieMixin:
             cookie_length = len(c.output(header="")[1:])
             if cookie_length > COOKIE_MAX_LENGTH:
                 warnings.warn(
-                    "The size of is too large, it might get ignored by the client.",
+                    "The size of the cookie is too large, it might get ignored by the client.",
                     UserWarning,
                     stacklevel=2,
                 )
