@@ -242,6 +242,20 @@ def test_content_length() -> None:
     assert 123 == req.content_length
 
 
+def test_content_length_non_numeric_raises_value_error() -> None:
+    req = make_mocked_request("Get", "/", CIMultiDict([("CONTENT-LENGTH", "abc")]))
+
+    with pytest.raises(ValueError, match=r"invalid Content-Length value: 'abc'"):
+        req.content_length
+
+
+def test_content_length_empty_raises_value_error() -> None:
+    req = make_mocked_request("Get", "/", CIMultiDict([("CONTENT-LENGTH", "")]))
+
+    with pytest.raises(ValueError, match=r"invalid Content-Length value: ''"):
+        req.content_length
+
+
 def test_range_to_slice_head() -> None:
     req = make_mocked_request(
         "GET", "/", headers=CIMultiDict([("RANGE", "bytes=0-499")])
@@ -849,6 +863,13 @@ def test_clone_override_client_max_size() -> None:
     req = make_mocked_request("GET", "/path", client_max_size=1024)
     req2 = req.clone(client_max_size=2048)
     assert req2.client_max_size == 2048
+
+
+def test_clone_preserves_pre_handler_error() -> None:
+    req = make_mocked_request("GET", "/path")
+    err = web.HTTPBadRequest(text="bad")
+    req._pre_handler_error = err
+    assert req.clone().pre_handler_error is err
 
 
 def test_clone_method() -> None:

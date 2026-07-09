@@ -102,7 +102,9 @@ def parse_content_disposition(
     if not header:
         return None, {}
 
+    # https://www.rfc-editor.org/info/rfc9110/#section-5.6.6-2
     disptype, *parts = header.split(";")
+    disptype = disptype.strip()
     if not is_token(disptype):
         warnings.warn(BadContentDispositionHeader(header))
         return None, {}
@@ -154,9 +156,10 @@ def parse_content_disposition(
 
         else:
             failed = True
-            if is_quoted(value):
+            rstripped = value.rstrip()
+            if is_quoted(rstripped):
                 failed = False
-                value = unescape(value[1:-1].lstrip("\\/"))
+                value = unescape(rstripped[1:-1].lstrip("\\/"))
             elif is_token(value):
                 failed = False
             elif parts:

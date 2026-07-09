@@ -30,6 +30,16 @@ class TestParseContentDisposition:
         assert disptype == "form-data"
         assert params == {"name": "data", "filename": "file ; name.mp4"}
 
+    def test_ows_before_separator(self) -> None:
+        # https://github.com/aio-libs/aiohttp/issues/13002
+        # Optional whitespace before the ";" separator (RFC 9110 §5.6.6) must
+        # not make the quoted-value repair heuristic swallow the next param.
+        disptype, params = parse_content_disposition(
+            'attachment; filename="test.txt" ; name="field"'
+        )
+        assert disptype == "attachment"
+        assert params == {"filename": "test.txt", "name": "field"}
+
     def test_inlwithasciifilename(self) -> None:
         disptype, params = parse_content_disposition('inline; filename="foo.html"')
         assert "inline" == disptype
@@ -658,6 +668,16 @@ class TestParseContentDisposition:
             )
         assert disptype is None
         assert {} == params
+
+    def test_disptype_with_trailing_space_before_semicolon(self) -> None:
+        disptype, params = parse_content_disposition('form-data ; name="field"')
+        assert disptype == "form-data"
+        assert params == {"name": "field"}
+
+    def test_disptype_with_trailing_space_no_params(self) -> None:
+        disptype, params = parse_content_disposition("inline ")
+        assert disptype == "inline"
+        assert params == {}
 
 
 class TestContentDispositionFilename:

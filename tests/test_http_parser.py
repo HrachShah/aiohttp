@@ -630,9 +630,32 @@ def test_parse_unusual_request_line(parser: HttpRequestParser) -> None:
     msg, _ = messages[0]
     assert msg.compression is None
     assert not msg.upgrade
-    assert msg.method == "#smol"
+    assert msg.method == "#SMOL"
     assert msg.path == "//a"
     assert msg.version == (1, 3)
+
+
+def test_py_parser_normalises_method_to_uppercase(
+    event_loop: asyncio.AbstractEventLoop, server: Server[Request]
+) -> None:
+    """Test Python parser canonicalises method tokens.
+
+    llhttp rejects lowercase upstream, so this only applies to the Python parser.
+    """
+    protocol = RequestHandler(server, loop=event_loop)
+    parser = HttpRequestParserPy(
+        protocol,
+        event_loop,
+        2**16,
+        max_line_size=8190,
+        max_field_size=8190,
+    )
+    protocol._parser = parser
+    text = b"get /test HTTP/1.1\r\nHost: a\r\n\r\n"
+    messages, _upgrade, _tail = parser.feed_data(text)
+    assert len(messages) == 1
+    msg, _ = messages[0]
+    assert msg.method == "GET"
 
 
 def test_parse(parser: HttpRequestParser) -> None:
@@ -1379,6 +1402,37 @@ async def test_compressed_chunked_with_pending(response: HttpResponseParser) -> 
     assert result == original
 
 
+async def test_compressed_chunked_split_chunk_size_line(
+    response: HttpResponseParser,
+) -> None:
+    """First chunk-size line arrives in a feed that carries no body bytes.
+
+    Regression test for an ``IndexError`` in the pure-Python parser: the
+    chunked parser fed an empty chunk to ``DeflateBuffer`` before any data
+    had been decoded, and the deflate header sniff indexed ``chunk[0]`` on it.
+    """
+    original = b"Hello, world! " * 4
+    compressed = zlib.compress(original)
+    size_line = hex(len(compressed))[2:].encode() + b"\r\n"
+    headers = (
+        b"HTTP/1.1 200 OK\r\n"
+        b"Transfer-Encoding: chunked\r\n"
+        b"Content-Encoding: deflate\r\n"
+        b"\r\n"
+    )
+
+    msgs, upgrade, tail = response.feed_data(headers)
+    payload = msgs[0][-1]
+    # The chunk-size line lands with no body bytes in the same feed, so the
+    # parser transitions into the chunk body with an empty buffer.
+    response.feed_data(size_line)
+    response.feed_data(compressed + b"\r\n0\r\n\r\n")
+
+    result = await payload.read()
+    assert result == original
+    assert payload.exception() is None
+
+
 async def test_compressed_until_eof_with_pending(response: HttpResponseParser) -> None:
     """Test read-until-eof + compressed with pause."""
     # Must be large enough to exceed high water mark.
@@ -1596,6 +1650,54 @@ async def test_http_request_upgrade_unknown(parser: HttpRequestParser) -> None:
     assert not msg.chunked
     assert tail == b""
     assert await messages[0][-1].read() == b"{}"
+
+
+@pytest.mark.parametrize("chunked", (False, True), ids=("content-length", "chunked"))
+async def test_http_request_upgrade_with_body_read(
+    parser: HttpRequestParser, chunked: bool
+) -> None:
+    body_request = b"foobarbaz\r\n\r\n"
+    if chunked:
+        framing = b"Transfer-Encoding: chunked\r\n"
+        body = b"%x\r\n%s\r\n0\r\n\r\n" % (len(body_request), body_request)
+    else:
+        framing = b"Content-Length: %d\r\n" % len(body_request)
+        body = body_request
+    after = b"GET /after HTTP/1.1\r\nHost: a\r\n\r\n"
+    text = (
+        b"GET /ws HTTP/1.1\r\nHost: a\r\n"
+        b"Connection: Upgrade\r\nUpgrade: websocket\r\n"
+        + framing
+        + b"\r\n"
+        + body
+        + after
+    )
+    messages, upgrade, tail = parser.feed_data(text)
+    assert len(messages) == 1
+    msg, payload = messages[0]
+    assert msg.method == "GET"
+    assert msg.path == "/ws"
+    assert msg.upgrade
+    assert await payload.read() == body_request
+    # The connection switches protocols only after the body is fully read.
+    assert upgrade
+    assert tail == after
+
+
+def test_http_request_upgrade_empty_body_allowed(parser: HttpRequestParser) -> None:
+    text = (
+        b"GET /ws HTTP/1.1\r\n"
+        b"Host: a\r\n"
+        b"Connection: Upgrade\r\n"
+        b"Upgrade: websocket\r\n"
+        b"Content-Length: 0\r\n\r\n"
+        b"some raw data"
+    )
+    messages, upgrade, tail = parser.feed_data(text)
+    msg = messages[0][0]
+    assert msg.upgrade
+    assert upgrade
+    assert tail == b"some raw data"
 
 
 @pytest.fixture

@@ -143,8 +143,8 @@ class WebSocketReader:
         self,
         queue: WebSocketDataQueue,
         max_msg_size: int,
-        compress: bool = True,
-        decode_text: bool = True,
+        compress: bool,
+        decode_text: bool,
     ) -> None:
         self.queue = queue
         self._max_msg_size = max_msg_size
@@ -293,7 +293,10 @@ class WebSocketReader:
             payload_len = len(payload)
             if payload_len >= 2:
                 close_code = UNPACK_CLOSE_CODE(payload[:2])[0]
-                if close_code < 3000 and close_code not in ALLOWED_CLOSE_CODES:
+                # https://datatracker.ietf.org/doc/html/rfc6455#section-7.4.2
+                if close_code > 4999 or (
+                    close_code < 3000 and close_code not in ALLOWED_CLOSE_CODES
+                ):
                     raise WebSocketError(
                         WSCloseCode.PROTOCOL_ERROR,
                         f"Invalid close code: {close_code}",
