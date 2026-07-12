@@ -876,11 +876,16 @@ def set_exception(
 
     If the future is marked as complete, this function is a no-op.
 
+    :param exc: An exception instance, or an exception class that will be
+        instantiated with no arguments before being set on the future.
     :param exc_cause: An exception that is a direct cause of ``exc``.
                       Only set if provided.
     """
     if asyncio.isfuture(fut) and fut.done():
         return
+
+    if isinstance(exc, type) and issubclass(exc, BaseException):
+        exc = exc()
 
     exc_is_sentinel = exc_cause is _EXC_SENTINEL
     exc_causes_itself = exc is exc_cause

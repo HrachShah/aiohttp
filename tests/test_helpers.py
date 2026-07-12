@@ -809,6 +809,35 @@ async def test_set_exception_cancelled() -> None:
         await fut
 
 
+async def test_set_exception_accepts_exception_class() -> None:
+    """set_exception must accept a class, per its documented signature.
+
+    Previously, passing a class (e.g. ``ValueError`` rather than
+    ``ValueError()``) raised ``TypeError: cannot set '__cause__' attribute
+    of immutable type`` from inside the helper, leaving the future in an
+    un-completed state. The fix instantiates the class with no args before
+    setting the exception.
+    """
+    fut = asyncio.get_running_loop().create_future()
+    helpers.set_exception(fut, ValueError)
+
+    assert fut.done()
+    with pytest.raises(ValueError):
+        await fut
+
+
+async def test_set_exception_class_with_cause() -> None:
+    """Passing a class plus an exc_cause must also work, with __cause__ set."""
+    fut = asyncio.get_running_loop().create_future()
+    helpers.set_exception(fut, ValueError, RuntimeError("root"))
+
+    assert fut.done()
+    with pytest.raises(ValueError) as excinfo:
+        await fut
+    assert isinstance(excinfo.value.__cause__, RuntimeError)
+    assert str(excinfo.value.__cause__) == "root"
+
+
 # ----------- ChainMapProxy --------------------------
 
 AppKeyDict = dict[str | web.AppKey[object], object]

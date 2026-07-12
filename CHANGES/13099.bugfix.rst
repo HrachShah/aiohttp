@@ -1,0 +1,5 @@
+Fixed :py:func:`~aiohttp.helpers.set_exception` to accept an exception class
+(not just an instance) by instantiating it before setting the exception on the
+future. Previously, passing a class (e.g. ``ValueError``) would crash inside
+the helper with ``TypeError: cannot set '__cause__' attribute of immutable
+type`` and leave the future un-completed, masking the original error.
