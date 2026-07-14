@@ -156,6 +156,45 @@ def test_encode_basic_auth_rejects_colon_in_login() -> None:
         helpers.encode_basic_auth("user:1", "pwd")
 
 
+@pytest.mark.parametrize(
+    ("arg_name", "bad_value"),
+    [
+        ("login", 123),
+        ("login", None),
+        ("login", b"user"),
+        ("password", 123),
+        ("password", None),
+        ("password", b"pass"),
+        ("encoding", None),
+        ("encoding", 123),
+        ("encoding", b"utf-8"),
+    ],
+)
+def test_encode_basic_auth_rejects_non_str_input(arg_name: str, bad_value: object) -> None:
+    """Non-str values for the str-typed parameters must be rejected at the
+    call site with a TypeError that names the parameter and the offending
+    type, rather than crashing inside the f-string with a cryptic C-level
+    'argument of type X is not iterable' TypeError.
+    """
+    valid = {"login": "user", "password": "pass", "encoding": "utf-8"}
+    kwargs = dict(valid, **{arg_name: bad_value})
+    with pytest.raises(TypeError) as ctx:
+        helpers.encode_basic_auth(**kwargs)  # type: ignore[arg-type]
+    message = str(ctx.value)
+    assert arg_name in message
+    assert type(bad_value).__name__ in message
+    assert "must be a str" in message
+
+
+def test_encode_basic_auth_accepts_str_input() -> None:
+    """Sanity check: str values for all three parameters still encode correctly."""
+    assert helpers.encode_basic_auth("user", "pass") == "Basic dXNlcjpwYXNz"
+    assert (
+        helpers.encode_basic_auth("user", "pass", encoding="utf-8")
+        == "Basic dXNlcjpwYXNz"
+    )
+
+
 def test_strip_auth_from_url() -> None:
     url, auth = helpers.strip_auth_from_url(URL("http://user:pass@example.com/"))
     assert url == URL("http://example.com/")

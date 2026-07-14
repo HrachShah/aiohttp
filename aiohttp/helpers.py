@@ -163,6 +163,21 @@ def encode_basic_auth(login: str, password: str = "", encoding: str = "utf-8") -
     Returns a string of the form ``"Basic <base64>"`` suitable for use as the
     value of the ``Authorization`` (or ``Proxy-Authorization``) header.
     """
+    if not isinstance(login, str):
+        raise TypeError(
+            f"encode_basic_auth: 'login' must be a str, "
+            f"got {type(login).__name__}: {login!r}"
+        )
+    if not isinstance(password, str):
+        raise TypeError(
+            f"encode_basic_auth: 'password' must be a str, "
+            f"got {type(password).__name__}: {password!r}"
+        )
+    if not isinstance(encoding, str):
+        raise TypeError(
+            f"encode_basic_auth: 'encoding' must be a str, "
+            f"got {type(encoding).__name__}: {encoding!r}"
+        )
     if ":" in login:
         raise ValueError('A ":" is not allowed in login (RFC 7617#section-2)')
     creds = f"{login}:{password}".encode(encoding)
