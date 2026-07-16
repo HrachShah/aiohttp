@@ -1663,6 +1663,14 @@ def test_save_load_json_domain_cookie_still_matches_subdomain(
     assert "sid" in jar_load.filter_cookies(subdomain)
 
 
+def test_load_rejects_malformed_cookie_storage_key(tmp_path: Path) -> None:
+    file_path = tmp_path / "malformed.json"
+    file_path.write_text(json.dumps({"missing-separator": {}}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match=r"expected 'domain\|path'"):
+        CookieJar().load(file_path)
+
+
 def test_save_load_json_preserves_max_age_deadline(tmp_path: Path) -> None:
     """Verify save/load restores the absolute deadline without resetting it."""
     file_path = tmp_path / "max_age.json"

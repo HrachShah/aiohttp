@@ -191,7 +191,12 @@ class CookieJar(AbstractCookieJar):
         """Replace contents, routing cookies through update_cookies()."""
         self.clear()
         for compound_key, cookie_data in data.items():
-            domain, path = compound_key.split("|", 1)
+            try:
+                domain, path = compound_key.split("|", 1)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Invalid cookie storage key {compound_key!r}; expected 'domain|path'"
+                ) from exc
             for name, morsel_data in cookie_data.items():
                 morsel: Morsel[str] = Morsel()
                 # Use __setstate__ to bypass validation, same pattern

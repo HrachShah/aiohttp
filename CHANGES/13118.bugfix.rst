@@ -1,0 +1,5 @@
+Surfaced a clear ``TypeError`` from :func:`aiohttp.encode_basic_auth` when ``login``,
+``password``, or ``encoding`` is not a string, instead of crashing inside the
+``f"{login}:{password}"`` interpolation with a bare ``TypeError: argument of type
+'X' is not iterable`` from the C-level string format machinery
+-- by :user:`HrachShah`.
