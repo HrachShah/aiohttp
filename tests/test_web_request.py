@@ -923,6 +923,30 @@ async def test_request_with_wrong_content_type_encoding(protocol: BaseProtocol) 
     assert err.value.status_code == 415
 
 
+@pytest.mark.parametrize(
+    "content_type",
+    ["text/html; charset=utf-8", "application/x-www-form-urlencoded; charset=utf-8"],
+)
+async def test_request_with_undecodable_body(
+    protocol: BaseProtocol, content_type: str
+) -> None:
+    payload = StreamReader(
+        protocol, DEFAULT_CHUNK_SIZE, loop=asyncio.get_running_loop()
+    )
+    payload.feed_data(b"\xff")
+    payload.feed_eof()
+    req = make_mocked_request(
+        "POST", "/", payload=payload, headers={"Content-Type": content_type}
+    )
+
+    with pytest.raises(web.HTTPUnsupportedMediaType) as err:
+        if content_type.startswith("text/"):
+            await req.text()
+        else:
+            await req.post()
+    assert err.value.status_code == 415
+
+
 async def test_make_too_big_request_same_size_to_max(protocol: BaseProtocol) -> None:
     payload = StreamReader(protocol, 2**16, loop=asyncio.get_running_loop())
     large_file = 1024**2 * b"x"
