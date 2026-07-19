@@ -923,6 +923,31 @@ async def test_request_with_wrong_content_type_encoding(protocol: BaseProtocol) 
     assert err.value.status_code == 415
 
 
+async def test_multipart_field_with_undecodable_body(protocol: BaseProtocol) -> None:
+    payload = StreamReader(
+        protocol, DEFAULT_CHUNK_SIZE, loop=asyncio.get_running_loop()
+    )
+    payload.feed_data(
+        b"--b\r\n"
+        b'Content-Disposition: form-data; name="field"\r\n'
+        b"Content-Type: text/plain; charset=test\r\n"
+        b"\r\n"
+        b"value\r\n"
+        b"--b--\r\n"
+    )
+    payload.feed_eof()
+    req = make_mocked_request(
+        "POST",
+        "/",
+        payload=payload,
+        headers={"Content-Type": "multipart/form-data; boundary=b"},
+    )
+
+    with pytest.raises(web.HTTPUnsupportedMediaType) as err:
+        await req.post()
+    assert err.value.status_code == 415
+
+
 @pytest.mark.parametrize(
     "content_type",
     ["text/html; charset=utf-8", "application/x-www-form-urlencoded; charset=utf-8"],
