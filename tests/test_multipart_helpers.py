@@ -30,6 +30,13 @@ class TestParseContentDisposition:
         assert disptype == "form-data"
         assert params == {"name": "data", "filename": "file ; name.mp4"}
 
+    def test_escaped_quote_and_semicolon_in_filename(self) -> None:
+        disptype, params = parse_content_disposition(
+            'attachment; filename="file \"part; two\".txt"'
+        )
+        assert disptype == "attachment"
+        assert params == {"filename": 'file "part; two".txt'}
+
     def test_inlwithasciifilename(self) -> None:
         disptype, params = parse_content_disposition('inline; filename="foo.html"')
         assert "inline" == disptype

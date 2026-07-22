@@ -77,6 +77,27 @@ class BadContentDispositionParam(RuntimeWarning):
 def parse_content_disposition(
     header: str | None,
 ) -> tuple[str | None, dict[str, str]]:
+    def split_parts(value: str) -> list[str]:
+        parts: list[str] = []
+        start = 0
+        quoted = False
+        escaped = False
+
+        for index, char in enumerate(value):
+            if escaped:
+                escaped = False
+            elif char == "\\" and quoted:
+                escaped = True
+            elif char == '"' and not quoted and index > 0 and value[index - 1] == "\\":
+                continue
+            elif char == '"':
+                quoted = not quoted
+            elif char == ";" and not quoted:
+                parts.append(value[start:index])
+                start = index + 1
+
+        parts.append(value[start:])
+        return parts
     def is_token(string: str) -> bool:
         return bool(string) and TOKEN >= set(string)
 
@@ -102,7 +123,7 @@ def parse_content_disposition(
     if not header:
         return None, {}
 
-    disptype, *parts = header.split(";")
+    disptype, *parts = split_parts(header)
     if not is_token(disptype):
         warnings.warn(BadContentDispositionHeader(header))
         return None, {}
