@@ -189,9 +189,21 @@ class CookieJar(AbstractCookieJar):
         self, data: dict[str, dict[str, dict[str, str | bool | float]]]
     ) -> None:
         """Replace contents, routing cookies through update_cookies()."""
+        if not isinstance(data, dict):
+            raise ValueError("Invalid cookie storage; expected a JSON object")
+
         self.clear()
         for compound_key, cookie_data in data.items():
-            domain, path = compound_key.split("|", 1)
+            if not isinstance(compound_key, str) or not isinstance(cookie_data, dict):
+                raise ValueError(
+                    "Invalid cookie storage entry; expected string domain/path and object cookies"
+                )
+            try:
+                domain, path = compound_key.split("|", 1)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Invalid cookie storage key {compound_key!r}; expected 'domain|path'"
+                ) from exc
             for name, morsel_data in cookie_data.items():
                 morsel: Morsel[str] = Morsel()
                 # Use __setstate__ to bypass validation, same pattern

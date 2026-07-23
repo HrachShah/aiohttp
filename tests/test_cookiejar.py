@@ -1850,3 +1850,19 @@ async def test_cookie_jar_unsafe_property() -> None:
 
     jar_unsafe = CookieJar(unsafe=True)
     assert jar_unsafe.unsafe is True
+
+
+def test_load_rejects_non_object_cookie_storage(tmp_path: Path) -> None:
+    file_path = tmp_path / "malformed.json"
+    file_path.write_text(json.dumps([]), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="expected a JSON object"):
+        CookieJar().load(file_path)
+
+
+def test_load_rejects_non_object_cookie_storage_entry(tmp_path: Path) -> None:
+    file_path = tmp_path / "malformed.json"
+    file_path.write_text(json.dumps({"example.com|/": []}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="expected string domain/path"):
+        CookieJar().load(file_path)
