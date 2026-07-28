@@ -56,6 +56,7 @@ class AccessLogger(AbstractAccessLogger):
         "D": "request_time_micro",
         "i": "request_header",
         "o": "response_header",
+        "e": "environment",
     }
 
     LOG_FORMAT = '%a %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"'
@@ -136,6 +137,12 @@ class AccessLogger(AbstractAccessLogger):
     ) -> str:
         # suboptimal, make istr(key) once
         return response.headers.get(key, "-")
+
+    @staticmethod
+    def _format_e(
+        key: str, request: BaseRequest, response: StreamResponse, time: float
+    ) -> str:
+        return os.environ.get(key, "-")
 
     @staticmethod
     def _format_a(request: BaseRequest, response: StreamResponse, time: float) -> str:

@@ -211,6 +211,24 @@ def test_access_logger_dst_timezone(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "-0400" in call3, f"Expected EDT offset in {call3}"
 
 
+def test_access_logger_environment_value() -> None:
+    log_format = "%{AIOHTTP_ACCESS_LOG_TEST}e %{MISSING_ACCESS_LOG_TEST}e"
+    mock_logger = mock.Mock()
+    with mock.patch.dict("os.environ", {"AIOHTTP_ACCESS_LOG_TEST": "enabled"}, clear=False):
+        access_logger = AccessLogger(mock_logger, log_format)
+        access_logger.log(make_mocked_request("GET", "/"), web.Response(), 0.0)
+
+    mock_logger.info.assert_called_with(
+        "enabled -",
+        extra={
+            "environment": {
+                "AIOHTTP_ACCESS_LOG_TEST": "enabled",
+                "MISSING_ACCESS_LOG_TEST": "-",
+            }
+        },
+    )
+
+
 def test_access_logger_dicts() -> None:
     log_format = "%{User-Agent}i %{Content-Length}o %{None}i"
     mock_logger = mock.Mock()
