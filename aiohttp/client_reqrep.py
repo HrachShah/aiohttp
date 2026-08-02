@@ -110,6 +110,8 @@ class ClientTimeout:
         # total=None means the user explicitly disabled the total timeout.
         if self.total is None:
             return
+        if isinstance(self.total, bool) or not isinstance(self.total, (int, float)):
+            raise TypeError("total timeout must be a number or None")
         object.__setattr__(
             self,
             "total",

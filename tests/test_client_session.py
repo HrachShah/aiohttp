@@ -1303,6 +1303,11 @@ def test_client_timeout_default_total() -> None:
     assert client.ClientTimeout().total == 5 * 60
 
 
+def test_client_timeout_rejects_boolean_total() -> None:
+    with pytest.raises(TypeError, match="must be a number"):
+        client.ClientTimeout(total=True)
+
+
 def test_client_timeout_default_total_raised_by_sock_read() -> None:
     # A sock_read larger than the default total should raise total to match,
     # so the more specific timeout isn't silently capped.
