@@ -274,6 +274,14 @@ def test_range_to_slice_tail_stop() -> None:
     assert req.http_range.start == -500 and req.http_range.stop is None
 
 
+def test_range_zero_length_suffix_is_invalid() -> None:
+    req = make_mocked_request(
+        "GET", "/", headers=CIMultiDict([("RANGE", "bytes=-0")])
+    )
+    with pytest.raises(ValueError, match="suffix length must be greater than zero"):
+        req.http_range
+
+
 def test_range_non_ascii() -> None:
     # ५ = DEVANAGARI DIGIT FIVE
     req = make_mocked_request("GET", "/", headers=CIMultiDict([("RANGE", "bytes=4-५")]))

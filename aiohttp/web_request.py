@@ -573,6 +573,8 @@ class BaseRequest(MutableMapping[str | RequestKey[Any], Any], HeadersMixin):
             start = int(start) if start else None
 
             if start is None and end is not None:
+                if end == 0:
+                    raise ValueError("suffix length must be greater than zero")
                 # end with no start is to return tail of content
                 start = -end
                 end = None

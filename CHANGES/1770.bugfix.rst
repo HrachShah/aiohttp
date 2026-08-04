@@ -1,0 +1,1 @@
+Rejected zero-length ``Range: bytes=-0`` requests instead of treating them as an empty suffix range.
