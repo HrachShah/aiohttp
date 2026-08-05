@@ -569,8 +569,11 @@ class BaseRequest(MutableMapping[str | RequestKey[Any], Any], HeadersMixin):
             except IndexError:  # pattern was not found in header
                 raise ValueError("range not in acceptable format")
 
-            end = int(end) if end else None
-            start = int(start) if start else None
+            try:
+                end = int(end) if end else None
+                start = int(start) if start else None
+            except ValueError as exc:
+                raise ValueError("range not in acceptable format") from exc
 
             if start is None and end is not None:
                 if end == 0:

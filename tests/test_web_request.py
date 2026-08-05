@@ -289,6 +289,14 @@ def test_range_non_ascii() -> None:
         req.http_range
 
 
+def test_range_oversized_number() -> None:
+    req = make_mocked_request(
+        "GET", "/", headers=CIMultiDict([("RANGE", "bytes=0-" + "9" * 5000)])
+    )
+    with pytest.raises(ValueError, match="range not in acceptable format"):
+        req.http_range
+
+
 def test_non_keepalive_on_http10() -> None:
     req = make_mocked_request("GET", "/", version=HttpVersion(1, 0))
     assert not req.keep_alive
