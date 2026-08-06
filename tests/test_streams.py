@@ -1123,6 +1123,9 @@ async def test_empty_stream_reader() -> None:
         await s.readexactly(10)
     assert s.read_nowait() == b""
     assert s.total_bytes == 0
+    assert await s.readuntil(b"separator") == b""
+    with pytest.raises(ValueError, match="Separator should be at least one-byte string"):
+        await s.readuntil(b"")
 
 
 async def test_empty_stream_reader_iter_chunks() -> None:

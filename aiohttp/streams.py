@@ -614,6 +614,12 @@ class EmptyStreamReader(StreamReader):  # lgtm [py/missing-call-to-init]
         return b""
 
     # TODO add async def readuntil
+    async def readuntil(
+        self, separator: bytes = b"\n", *, max_size: int | None = None
+    ) -> bytes:
+        if not separator:
+            raise ValueError("Separator should be at least one-byte string")
+        return b""
 
     async def readany(self) -> bytes:
         return b""
