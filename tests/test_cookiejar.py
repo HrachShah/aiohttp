@@ -120,6 +120,14 @@ def test_date_parsing() -> None:
         == datetime.datetime(1970, 1, 1, tzinfo=utc).timestamp()
     )
 
+    # Reject impossible calendar dates that timegm would normalise.
+    for value in (
+        "Tue, 29 Feb 1971 00:00:00 GMT",
+        "Tue, 30 Feb 1972 00:00:00 GMT",
+        "Tue, 31 Apr 1970 00:00:00 GMT",
+    ):
+        assert parse_func(value) is None
+
     # No year
     assert parse_func("Tue, 1 Jan 00:00:00 GMT") is None
 

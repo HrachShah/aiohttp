@@ -571,13 +571,17 @@ class CookieJar(AbstractCookieJar):
         if False in (found_day, found_month, found_year, found_time):
             return None
 
-        if not 1 <= day <= 31:
+        if year < 1601 or not 1 <= day <= 31 or month < 1 or month > 12:
             return None
-
-        if year < 1601 or hour > 23 or minute > 59 or second > 59:
+        if hour > 23 or minute > 59 or second > 59:
             return None
-
-        return calendar.timegm((year, month, day, hour, minute, second, -1, -1, -1))
+        # Reject combinations like Feb 30, Apr 31, or Feb 29 in a non-leap year.
+        if day > calendar.monthrange(year, month)[1]:
+            return None
+        try:
+            return calendar.timegm((year, month, day, hour, minute, second, -1, -1, -1))
+        except (OverflowError, ValueError):
+            return None
 
 
 class DummyCookieJar(AbstractCookieJar):
