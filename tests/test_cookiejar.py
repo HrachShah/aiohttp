@@ -673,6 +673,19 @@ class TestCookieJarSafe:
 
         assert set(cookies_sent.keys()) == {"shared-cookie"}
 
+    def test_max_age_overflow_is_clamped_to_maximum_time(self) -> None:
+        jar = CookieJar(unsafe=True)
+        jar.update_cookies(
+            SimpleCookie(
+                "long-lived=value; Domain=example.com; "
+                "Max-Age=999999999999999999999999999999999999999999999999999999"
+            ),
+            URL("http://example.com/"),
+        )
+
+        assert jar._expire_heap
+        assert jar._expire_heap[0][0] == jar.MAX_TIME
+
     def test_invalid_values(self) -> None:
         cookies_sent, cookies_received = self.request_reply_with_same_url(
             "http://invalid-values.com/"
