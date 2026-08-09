@@ -288,7 +288,13 @@ class BodyPartReader:
             # digits that int() would otherwise accept.
             # https://www.rfc-editor.org/rfc/rfc9110#section-8.6
             raise ValueError(f"invalid Content-Length: {length!r}")
-        self._length = int(length) if length is not None else None
+        if length is not None:
+            try:
+                self._length = int(length)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError("Invalid multipart part length") from exc
+        else:
+            self._length = None
         self._read_bytes = 0
         self._unread: deque[bytes] = deque()
         self._prev_chunk: bytes | None = None
