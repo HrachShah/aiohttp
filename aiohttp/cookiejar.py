@@ -373,7 +373,7 @@ class CookieJar(AbstractCookieJar):
 
             if max_age := cookie["max-age"]:
                 try:
-                    if not max_age.isascii():
+                    if not max_age.isascii() or not max_age.lstrip("-").isdigit():
                         raise ValueError
                     delta_seconds = int(max_age)
                     try:
