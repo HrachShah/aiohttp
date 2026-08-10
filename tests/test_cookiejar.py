@@ -39,6 +39,10 @@ def _cookies_to_send() -> SimpleCookie:
         " Max-Age=60; "
         "invalid-max-age-cookie=fifteenth; Domain=invalid-values.com; "
         " Max-Age=string; "
+        "unicode-max-age-cookie=seventeenth; Domain=invalid-values.com; "
+        " Max-Age=１２; "
+        "unicode-max-age-cookie=seventeenth; Domain=invalid-values.com; "
+        " Max-Age=１２; "
         "invalid-expires-cookie=sixteenth; Domain=invalid-values.com; "
         " Expires=string;"
     )
@@ -70,6 +74,8 @@ def cookies_to_send_with_expired() -> SimpleCookie:
         " Max-Age=60; "
         "invalid-max-age-cookie=fifteenth; Domain=invalid-values.com; "
         " Max-Age=string; "
+        "unicode-max-age-cookie=seventeenth; Domain=invalid-values.com; "
+        " Max-Age=１２; "
         "invalid-expires-cookie=sixteenth; Domain=invalid-values.com; "
         " Expires=string;"
     )
@@ -326,6 +332,8 @@ async def test_filter_cookies_with_domain_path_lookup_multilevelpath(
         " Max-Age=60; "
         "invalid-max-age-cookie=fifteenth; Domain=invalid-values.com; "
         " Max-Age=string; "
+        "unicode-max-age-cookie=seventeenth; Domain=invalid-values.com; "
+        " Max-Age=１２; "
         "invalid-expires-cookie=sixteenth; Domain=invalid-values.com; "
         " Expires=string;"
     )
@@ -358,6 +366,8 @@ async def test_domain_filter_ip_cookie_send() -> None:
         " Max-Age=60; "
         "invalid-max-age-cookie=fifteenth; Domain=invalid-values.com; "
         " Max-Age=string; "
+        "unicode-max-age-cookie=seventeenth; Domain=invalid-values.com; "
+        " Max-Age=１２; "
         "invalid-expires-cookie=sixteenth; Domain=invalid-values.com; "
         " Expires=string;"
     )
@@ -694,10 +704,14 @@ class TestCookieJarSafe:
         assert set(cookies_sent.keys()) == {
             "shared-cookie",
             "invalid-max-age-cookie",
+            "unicode-max-age-cookie",
             "invalid-expires-cookie",
         }
 
         cookie = cookies_sent["invalid-max-age-cookie"]
+        assert cookie["max-age"] == ""
+
+        cookie = cookies_sent["unicode-max-age-cookie"]
         assert cookie["max-age"] == ""
 
         cookie = cookies_sent["invalid-expires-cookie"]
