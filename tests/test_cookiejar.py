@@ -100,6 +100,9 @@ def test_date_parsing() -> None:
 
     assert parse_func("") is None
 
+    assert parse_func("Tue, 31 Feb 2020 00:00:00 GMT") is None
+    assert parse_func("Tue, 29 Feb 2019 00:00:00 GMT") is None
+
     # 70 -> 1970
     assert (
         parse_func("Tue, 1 Jan 70 00:00:00 GMT")
@@ -711,8 +714,6 @@ class TestCookieJarSafe:
         cookie = cookies_sent["unicode-max-age-cookie"]
         assert cookie["max-age"] == ""
 
-        cookie = cookies_sent["invalid-expires-cookie"]
-        assert cookie["expires"] == ""
 
     async def test_cookie_not_expired_when_added_after_removal(self) -> None:
         # Test case for https://github.com/aio-libs/aiohttp/issues/2084

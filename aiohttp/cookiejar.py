@@ -577,6 +577,11 @@ class CookieJar(AbstractCookieJar):
         if year < 1601 or hour > 23 or minute > 59 or second > 59:
             return None
 
+        try:
+            datetime.datetime(year, month, day, hour, minute, second)
+        except ValueError:
+            return None
+
         return calendar.timegm((year, month, day, hour, minute, second, -1, -1, -1))
 
 
