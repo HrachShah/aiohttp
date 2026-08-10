@@ -375,8 +375,6 @@ class CookieJar(AbstractCookieJar):
                 try:
                     if not max_age.isascii():
                         raise ValueError
-                    if not max_age.isascii():
-                        raise ValueError
                     delta_seconds = int(max_age)
                     try:
                         max_age_expiration = min(time.time() + delta_seconds, self.MAX_TIME)

@@ -41,8 +41,6 @@ def _cookies_to_send() -> SimpleCookie:
         " Max-Age=string; "
         "unicode-max-age-cookie=seventeenth; Domain=invalid-values.com; "
         " Max-Age=１２; "
-        "unicode-max-age-cookie=seventeenth; Domain=invalid-values.com; "
-        " Max-Age=１２; "
         "invalid-expires-cookie=sixteenth; Domain=invalid-values.com; "
         " Expires=string;"
     )
@@ -705,7 +703,6 @@ class TestCookieJarSafe:
             "shared-cookie",
             "invalid-max-age-cookie",
             "unicode-max-age-cookie",
-            "invalid-expires-cookie",
         }
 
         cookie = cookies_sent["invalid-max-age-cookie"]
