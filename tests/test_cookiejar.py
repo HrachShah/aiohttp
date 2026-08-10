@@ -703,7 +703,6 @@ class TestCookieJarSafe:
             "shared-cookie",
             "invalid-max-age-cookie",
             "unicode-max-age-cookie",
-            "invalid-expires-cookie",
         }
 
         cookie = cookies_sent["invalid-max-age-cookie"]
