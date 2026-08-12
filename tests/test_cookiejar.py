@@ -706,6 +706,18 @@ class TestCookieJarSafe:
         assert jar._expire_heap
         assert jar._expire_heap[0][0] == jar.MAX_TIME
 
+    def test_negative_max_age_overflow_expires_cookie(self) -> None:
+        jar = CookieJar(unsafe=True)
+        jar.update_cookies(
+            SimpleCookie(
+                "expired=value; Domain=example.com; "
+                "Max-Age=-999999999999999999999999999999999999999999999999999999"
+            ),
+            URL("http://example.com/"),
+        )
+
+        assert "expired" not in jar.filter_cookies(URL("http://example.com/"))
+
     def test_invalid_values(self) -> None:
         cookies_sent, cookies_received = self.request_reply_with_same_url(
             "http://invalid-values.com/"

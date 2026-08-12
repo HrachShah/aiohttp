@@ -379,7 +379,9 @@ class CookieJar(AbstractCookieJar):
                     try:
                         max_age_expiration = min(time.time() + delta_seconds, self.MAX_TIME)
                     except OverflowError:
-                        max_age_expiration = self.MAX_TIME
+                        max_age_expiration = (
+                            self.MAX_TIME if delta_seconds > 0 else 0
+                        )
                     self._expire_cookie(max_age_expiration, domain, path, name)
                 except ValueError:
                     cookie["max-age"] = ""
